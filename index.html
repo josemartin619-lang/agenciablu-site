@@ -1015,6 +1015,22 @@ body{font-size:16px}
     railLinks.forEach(function(a){ a.classList.toggle('on', a.getAttribute('data-rail')===cur); });
   }
 
+  /* ---- in-page links scroll without writing #section into the address bar ---- */
+  document.addEventListener('click', function(e){
+    if (e.defaultPrevented || e.button || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    var a = e.target.closest && e.target.closest('a[href^="#"]'); if (!a) return;
+    var id = a.getAttribute('href').slice(1);
+    var t = id ? document.getElementById(id) : null;
+    if (id && !t) return;
+    e.preventDefault();
+    if (t) t.scrollIntoView({behavior: reduce ? 'auto' : 'smooth', block: 'start'}); else window.scrollTo({top: 0, behavior: reduce ? 'auto' : 'smooth'});
+  });
+  // arriving on agenciablu.com/#seccion still lands on the section, then the URL is cleaned
+  if (location.hash && history.replaceState){
+    var cleanHash = function(){ history.replaceState(null, '', location.pathname + location.search); };
+    if (document.readyState === 'complete') setTimeout(cleanHash, 300); else window.addEventListener('load', function(){ setTimeout(cleanHash, 300); });
+  }
+
   /* ---- travelling border lights: four edge tracks per .glow ---- */
   Array.prototype.forEach.call(document.querySelectorAll('.glow'), function(g){ g.innerHTML = '<i class="t"></i><i class="r"></i><i class="b"></i><i class="l"></i>'; });
 
