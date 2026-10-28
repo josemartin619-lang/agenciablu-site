@@ -29,9 +29,9 @@ html:not([lang="en"]) .en{display:none}
 :focus-visible{outline:2px solid var(--accent);outline-offset:3px}
 
 /* ---------- NAV ---------- */
-.nav{position:fixed;inset:0 0 auto 0;z-index:50;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px var(--gutter);padding-top:calc(14px + env(safe-area-inset-top,0px));color:var(--white);transition:color .35s ease;mix-blend-mode:normal}
-.nav.on-paper{color:var(--fg);background:linear-gradient(to bottom, rgba(239,237,230,.96) 0%, rgba(239,237,230,.75) 60%, rgba(239,237,230,0) 100%)}
-.nav.on-dark{color:var(--white);background:linear-gradient(to bottom, rgba(14,14,14,.6) 0%, rgba(14,14,14,.3) 60%, rgba(14,14,14,0) 100%)}
+.nav{position:fixed;inset:0 0 auto 0;z-index:50;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px var(--gutter);padding-top:calc(14px + env(safe-area-inset-top,0px));color:var(--white);transition:color .35s ease,background-color .35s ease;mix-blend-mode:normal}
+.nav.on-paper{color:var(--fg);background:rgba(239,237,230,.97);box-shadow:0 1px 0 rgba(20,20,18,.08)}
+.nav.on-dark{color:var(--white);background:rgba(14,14,14,.95);box-shadow:0 1px 0 rgba(246,244,238,.08)}
 .nav .brand{display:inline-flex;align-items:center;line-height:1}
 .logo{display:inline-flex;align-items:center;gap:10px;line-height:1;color:inherit}
 .logo .mark{width:28px;height:28px;flex:none}
@@ -64,28 +64,35 @@ html:not([lang="en"]) .en{display:none}
 .title .hmark{display:block;width:clamp(44px,5vw,64px);height:clamp(44px,5vw,64px);margin-bottom:clamp(18px,2.2vw,28px)}
 .title .hag{display:block;font-size:clamp(10px,.9vw,12px);font-weight:500;letter-spacing:.38em;text-transform:uppercase;opacity:.7;margin-bottom:.35em}
 .title .hblu{display:block;font-size:clamp(54px,7vw,104px);font-weight:600;letter-spacing:-.045em;line-height:.9;margin-bottom:.12em}
-/* glowing frame: a light that runs along a border */
-@property --ga{syntax:'<angle>';inherits:false;initial-value:0deg}
-.glow{position:absolute;inset:0;pointer-events:none;border-radius:inherit}
-.glow::before,.glow::after{content:"";position:absolute;inset:-1px;border-radius:inherit;padding:1px;
-  background:conic-gradient(from var(--ga), transparent 0deg, transparent 286deg, rgba(214,226,255,.18) 320deg, rgba(255,255,255,.95) 352deg, transparent 360deg);
-  -webkit-mask:linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask:linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);mask-composite:exclude;
-  animation:ga 7s linear infinite}
-.glow::after{inset:-4px;padding:4px;filter:blur(5px);opacity:.85}
-@keyframes ga{to{--ga:360deg}}
-/* the hero frame: a crisp line with a soft glow, inset from the screen edge, with the travelling light */
+/* glowing frame: a light that runs along a border.
+   Built from four edge tracks whose light only moves with transform, so it is composited on the GPU
+   and never repaints the frame (the old animated conic-gradient + blur repainted the whole screen every frame). */
+.glow{position:absolute;inset:-1px;pointer-events:none;border-radius:inherit;--gd:7s}
+.hframe .glow{--gd:12s}
+.glow>i{position:absolute;overflow:hidden;display:block}
+.glow>i::before{content:"";position:absolute;inset:0;transform:translate3d(-100%,0,0);will-change:transform;opacity:0;animation:var(--gd) linear infinite}
+.glow>i.t,.glow>i.b{left:0;right:0;height:9px}
+.glow>i.r,.glow>i.l{top:0;bottom:0;width:9px}
+.glow>i.t{top:-4px}.glow>i.b{bottom:-4px}.glow>i.r{right:-4px}.glow>i.l{left:-4px}
+/* light profile: a white 1px core on the line, a soft blue halo either side, and a tail fading behind the head */
+.glow>i.t::before{background:linear-gradient(to bottom,transparent,rgba(214,226,255,.32) 30%,rgba(255,255,255,.95) 44%,rgba(255,255,255,.95) 56%,rgba(214,226,255,.32) 70%,transparent);-webkit-mask:linear-gradient(90deg,transparent 62%,#000);mask:linear-gradient(90deg,transparent 62%,#000);animation-name:g-x}
+.glow>i.b::before{background:linear-gradient(to bottom,transparent,rgba(214,226,255,.32) 30%,rgba(255,255,255,.95) 44%,rgba(255,255,255,.95) 56%,rgba(214,226,255,.32) 70%,transparent);-webkit-mask:linear-gradient(270deg,transparent 62%,#000);mask:linear-gradient(270deg,transparent 62%,#000);animation-name:g-xr;animation-delay:calc(var(--gd) * -.5)}
+.glow>i.r::before{background:linear-gradient(to right,transparent,rgba(214,226,255,.32) 30%,rgba(255,255,255,.95) 44%,rgba(255,255,255,.95) 56%,rgba(214,226,255,.32) 70%,transparent);-webkit-mask:linear-gradient(180deg,transparent 62%,#000);mask:linear-gradient(180deg,transparent 62%,#000);animation-name:g-y;animation-delay:calc(var(--gd) * -.75)}
+.glow>i.l::before{background:linear-gradient(to right,transparent,rgba(214,226,255,.32) 30%,rgba(255,255,255,.95) 44%,rgba(255,255,255,.95) 56%,rgba(214,226,255,.32) 70%,transparent);-webkit-mask:linear-gradient(0deg,transparent 62%,#000);mask:linear-gradient(0deg,transparent 62%,#000);animation-name:g-yr;animation-delay:calc(var(--gd) * -.25)}
+@keyframes g-x{0%{transform:translate3d(-100%,0,0);opacity:1}25%{transform:translate3d(100%,0,0);opacity:1}25.01%,100%{transform:translate3d(100%,0,0);opacity:0}}
+@keyframes g-xr{0%{transform:translate3d(100%,0,0);opacity:1}25%{transform:translate3d(-100%,0,0);opacity:1}25.01%,100%{transform:translate3d(-100%,0,0);opacity:0}}
+@keyframes g-y{0%{transform:translate3d(0,-100%,0);opacity:1}25%{transform:translate3d(0,100%,0);opacity:1}25.01%,100%{transform:translate3d(0,100%,0);opacity:0}}
+@keyframes g-yr{0%{transform:translate3d(0,100%,0);opacity:1}25%{transform:translate3d(0,-100%,0);opacity:1}25.01%,100%{transform:translate3d(0,-100%,0);opacity:0}}
+/* the hero frame: a crisp line with a soft, steady glow, inset from the screen edge, with the travelling light */
 .hframe{position:absolute;inset:clamp(10px,1.2vw,18px);border:1px solid rgba(246,244,238,.5);border-radius:2px;pointer-events:none;
-  box-shadow:0 0 14px rgba(214,226,255,.22), 0 0 2px rgba(255,255,255,.35), inset 0 0 16px rgba(214,226,255,.10);
-  animation:breathe 5s ease-in-out infinite}
-.hframe .glow::before,.hframe .glow::after{animation-duration:12s}
-.hframe .glow::before{background:conic-gradient(from var(--ga), transparent 0deg, transparent 300deg, rgba(214,226,255,.25) 330deg, #fff 354deg, transparent 360deg)}
-.hframe .glow::after{inset:-6px;padding:6px;filter:blur(7px);opacity:.9;background:conic-gradient(from var(--ga), transparent 0deg, transparent 300deg, rgba(214,226,255,.25) 330deg, #fff 354deg, transparent 360deg)}
-@keyframes breathe{0%,100%{box-shadow:0 0 14px rgba(214,226,255,.22), 0 0 2px rgba(255,255,255,.35), inset 0 0 16px rgba(214,226,255,.10)}50%{box-shadow:0 0 22px rgba(214,226,255,.34), 0 0 2px rgba(255,255,255,.5), inset 0 0 22px rgba(214,226,255,.16)}}
-@media (prefers-reduced-motion:reduce){.hframe{animation:none}}
-@media (prefers-reduced-motion:reduce){.glow::before,.glow::after{animation:none}}
+  box-shadow:0 0 14px rgba(214,226,255,.22), 0 0 2px rgba(255,255,255,.35), inset 0 0 16px rgba(214,226,255,.10)}
+/* lights run only where they can be seen */
+.btn .glow>i::before{animation-play-state:paused}.btn:hover .glow>i::before,.btn:focus-visible .glow>i::before{animation-play-state:running}
+.stage.off .glow>i::before,.title.gone .glow>i::before{animation-play-state:paused}
+@media (prefers-reduced-motion:reduce){.glow>i::before{animation:none;opacity:0}}
 .title h1 em{font-family:var(--display);font-style:italic;font-weight:400;letter-spacing:0}
-.hand{position:absolute;inset:auto;pointer-events:none;will-change:transform,opacity;user-select:none}
-.stage .headline{position:absolute;inset:auto;left:var(--gutter);top:14%;margin:0;text-align:left;color:var(--white);font-family:var(--display);font-weight:500;font-size:clamp(40px,8.2vw,132px);line-height:.94;letter-spacing:-.01em;padding:0;opacity:0;will-change:opacity,transform;pointer-events:none}
+.hand{position:absolute;inset:auto;max-width:none;max-height:none;pointer-events:none;will-change:transform,opacity;user-select:none}
+.stage .headline{position:absolute;inset:auto;left:var(--gutter);top:14%;margin:0;text-align:left;color:var(--white);font-family:var(--display);font-weight:500;font-size:min(clamp(40px,8.2vw,132px),14svh);line-height:.94;letter-spacing:-.01em;padding:0;opacity:0;will-change:opacity,transform;pointer-events:none}
 .stage .headline .l2{display:block;font-style:italic;font-weight:400}
 #burst{pointer-events:none;width:100%;height:100%}
 .flash{background:radial-gradient(circle at var(--cx,50%) var(--cy,45%), rgba(255,250,240,1) 0%, rgba(255,244,225,.8) 12%, rgba(255,235,200,.22) 32%, rgba(0,0,0,0) 58%);opacity:0;pointer-events:none;will-change:opacity}
@@ -101,8 +108,8 @@ html:not([lang="en"]) .en{display:none}
 .rail a{display:flex;align-items:baseline;gap:10px;color:var(--muted);transition:color .25s}
 .rail a .n{margin-left:auto;font-family:var(--display);font-weight:400;font-size:13px;color:var(--muted)}
 .rail a .dots{flex:1;border-bottom:1px dotted transparent;transform:translateY(-4px)}
-.rail a.cur{color:var(--fg)}
-.rail a.cur .dots{border-bottom-color:var(--muted)}
+.rail a.on{color:var(--fg)}
+.rail a.on .dots{border-bottom-color:var(--muted)}
 .rail .foot{margin-top:28px;font-size:11px;color:var(--muted);font-weight:400;line-height:1.5}
 
 .content{min-width:0}
@@ -645,8 +652,8 @@ body{font-size:16px}
       <div class="frame"><span class="glow" aria-hidden="true"></span><h1 data-brand-title><svg class="hmark" aria-hidden="true"><use href="#blu-mark"/></svg><span class="hag">Agencia</span><span class="hblu">Blu</span><em><span class="es">Consultoría de IA</span><span class="en">AI consultancy</span></em></h1></div>
     </div>
     <h2 class="headline" id="headline"><span class="es">La IA trabaja.<span class="l2">Tu equipo decide.</span></span><span class="en">AI does the work.<span class="l2">Your team decides.</span></span></h2>
-    <img class="hand" id="hand-h" src="img/hand-human.png" alt="" width="1254" height="1254" decoding="async">
-    <img class="hand" id="hand-r" src="img/hand-robot.png" alt="" width="1254" height="1254" decoding="async">
+    <img class="hand" id="hand-h" src="img/hand-human.webp" alt="" width="1254" height="1254" decoding="async" fetchpriority="high">
+    <img class="hand" id="hand-r" src="img/hand-robot.webp" alt="" width="1254" height="1254" decoding="async" fetchpriority="high">
     <canvas id="burst" aria-hidden="true"></canvas>
     <div class="flash" id="flash" aria-hidden="true"></div>
     <div class="scrollhint" id="scrollhint" aria-hidden="true"><span class="es">Desliza</span><span class="en">Scroll</span></div>
@@ -1005,8 +1012,11 @@ body{font-size:16px}
   function updateRail(){
     var y = window.innerHeight*0.42, cur = null;
     for (var i=0;i<sections.length;i++){ if (sections[i].getBoundingClientRect().top <= y) cur = sections[i].getAttribute('data-section'); }
-    railLinks.forEach(function(a){ a.classList.toggle('cur', a.getAttribute('data-rail')===cur); });
+    railLinks.forEach(function(a){ a.classList.toggle('on', a.getAttribute('data-rail')===cur); });
   }
+
+  /* ---- travelling border lights: four edge tracks per .glow ---- */
+  Array.prototype.forEach.call(document.querySelectorAll('.glow'), function(g){ g.innerHTML = '<i class="t"></i><i class="r"></i><i class="b"></i><i class="l"></i>'; });
 
   /* ---- hero ---- */
   var hero = document.querySelector('.hero'), stage = document.getElementById('stage');
@@ -1016,7 +1026,7 @@ body{font-size:16px}
   var handH = document.getElementById('hand-h'), handR = document.getElementById('hand-r');
   var burst = document.getElementById('burst'), bctx = burst.getContext('2d');
   var flash = document.getElementById('flash'), hint = document.getElementById('scrollhint');
-  var HTIP = {x:0.999, y:0.417}, RTIP = {x:0.01, y:0.593};
+  var HTIP = {x:0.9992, y:0.4185}, RTIP = {x:0.0185, y:0.5933};
   var W=0, H=0, C={x:0,y:0}, S=0, dpr=1;
   var RF = {};
 
@@ -1076,7 +1086,7 @@ body{font-size:16px}
     RF.wake=function(){ if(raf||!visible) return; last=performance.now(); raf=requestAnimationFrame(frame); };
     stage.addEventListener('pointermove', function(e){ if(reduce) return; var r=stage.getBoundingClientRect(); ptr.push({x:e.clientX-r.left,y:e.clientY-r.top,age:0}); if(ptr.length>8) ptr.shift(); RF.wake(); },{passive:true});
     stage.addEventListener('pointerdown', function(e){ var r=stage.getBoundingClientRect(); RF.pulse(e.clientX-r.left, e.clientY-r.top, 1.0); },{passive:true});
-    new IntersectionObserver(function(en){ visible=en[0].isIntersecting; if(visible) RF.wake(); }).observe(stage);
+    new IntersectionObserver(function(en){ visible=en[0].isIntersecting; stage.classList.toggle('off', !visible); if(visible) RF.wake(); }).observe(stage);
     RF.resize();
   })();
 
@@ -1084,9 +1094,12 @@ body{font-size:16px}
     W = stage.clientWidth; H = stage.clientHeight;
     dpr = Math.min(window.devicePixelRatio||1, 2);
     // the fingertips meet here
-    C.x = W*0.5; C.y = H*0.5;
+    var portrait = H > W*1.15;
+    C.x = W*0.5; C.y = H*(portrait ? 0.56 : 0.5);
     flash.style.setProperty('--cx', (C.x/W*100)+'%'); flash.style.setProperty('--cy', (C.y/H*100)+'%');
-    S = Math.min(W*0.72, H*0.86);
+    S = portrait ? Math.min(W*1.25, H*0.62) : Math.min(W*0.72, H*0.86);
+    // the arms must leave the screen on both sides: human off the left edge, robot off the right edge
+    S = Math.max(S, (C.x + 4)/HTIP.x, (W - C.x + 4)/(1 - RTIP.x));
     [handH, handR].forEach(function(im){ im.style.width = S+'px'; im.style.height = S+'px'; });
     handH.style.left = (C.x - HTIP.x*S)+'px'; handH.style.top = (C.y - HTIP.y*S)+'px';
     handR.style.left = (C.x - RTIP.x*S)+'px'; handR.style.top = (C.y - RTIP.y*S)+'px';
@@ -1127,7 +1140,7 @@ body{font-size:16px}
     // construction grid stays; it dims a little once the headline is up
     ringsEl.style.opacity = 1 - 0.35*seg(p, .60, .74);
     // title card
-    var tOp = 1 - seg(p, .08, .16); title.style.opacity = tOp; title.style.transform = 'scale('+(1 - 0.04*seg(p,.08,.16))+')';
+    var tOp = 1 - seg(p, .08, .16); title.style.opacity = tOp; title.classList.toggle('gone', tOp <= 0); title.style.transform = 'scale('+(1 - 0.04*seg(p,.08,.16))+')';
     hint.style.opacity = p < 0.03 ? 1 : 0;
     // hands approach: fast at first, then a slow close so the last stretch is visible
     var s = seg(p, .10, .56);
@@ -1402,6 +1415,7 @@ body{font-size:16px}
     measure(); render();
   })();
 
+  var coarse = (window.matchMedia && matchMedia('(pointer:coarse)').matches) || window.innerWidth < 820;
   /* ---- grain wave (Contacto): a grainy ribbon of colour waving through the dark ---- */
   (function grainWave(){
     var host=document.getElementById('wave'); if(!host) return; var c=host.querySelector('canvas');
@@ -1428,7 +1442,7 @@ body{font-size:16px}
     var P={speed:0.6,amp:0.65,freq:4.0,width:3.5,thick:0.2,grain:0.5,scale:0.6,bright:1.0,speedVar:0.028};
     var A=[0.35,0.67,0.93],B=[0.20,0.40,0.94],BG=[0,0,0];
     var w=1,h=1,d=1,time=0,last=0,raf=0,visible=false;
-    function resize(){w=Math.max(1,host.clientWidth);h=Math.max(1,host.clientHeight);d=Math.min(window.devicePixelRatio||1,1.5,Math.sqrt(2.0e6/(w*h)));c.width=Math.round(w*d);c.height=Math.round(h*d);gl.viewport(0,0,c.width,c.height);}
+    function resize(){w=Math.max(1,host.clientWidth);h=Math.max(1,host.clientHeight);d=Math.min(window.devicePixelRatio||1,1.5,Math.sqrt((coarse?3.5e5:2.0e6)/(w*h)));c.width=Math.round(w*d);c.height=Math.round(h*d);gl.viewport(0,0,c.width,c.height);}
     function frame(now){raf=0;var dt=Math.min(0.05,Math.max(0,(now-last)/1000));last=now;if(!reduce)time+=dt*P.speed;
       gl.uniform2f(U.uRes,c.width,c.height);gl.uniform1f(U.uTime,time);gl.uniform1f(U.uAmp,P.amp);gl.uniform1f(U.uFreq,P.freq);gl.uniform1f(U.uWidth,P.width);gl.uniform1f(U.uThick,P.thick);gl.uniform1f(U.uGrain,P.grain);gl.uniform1f(U.uScale,P.scale);gl.uniform1f(U.uBright,P.bright);gl.uniform1f(U.uSpeedVar,P.speedVar);
       gl.uniform3fv(U.uA,A);gl.uniform3fv(U.uB,B);gl.uniform3fv(U.uBg,BG);gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
